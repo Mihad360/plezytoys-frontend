@@ -195,7 +195,6 @@ export default function CreateCompanyPage() {
                     <UseSelect
                       name="pilotDuration"
                       placeholder="Select duration"
-                      size="large"
                       options={[
                         { label: "1 month", value: "1 month" },
                         { label: "2 months", value: "2 months" },
