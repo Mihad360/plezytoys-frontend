@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 
 import { Bell, Crown } from "lucide-react";
 
@@ -38,9 +39,9 @@ export default function CompanyAdminDashboard() {
           <h1 className="text-[#1a2642] text-[18px] font-bold leading-tight">Company Operations Overview</h1>
         </div>
         <div className="flex items-center gap-4">
-          <button className="flex items-center gap-2 px-4 py-1.5 border border-orange-200 bg-orange-50 rounded-full text-[#f97316] text-[13px] font-semibold hover:bg-orange-100 transition-colors">
-            <Crown size={14} className="fill-[#f97316]" /> Subscription
-          </button>
+          <Link href="/company-admin/subscription" className="flex items-center gap-2 px-4 py-1.5 border border-orange-200 bg-orange-50 rounded-full text-[#f97316] text-[13px] font-semibold hover:bg-orange-100 transition-colors">
+            <span className="text-[16px] text-[#f97316]">?</span> Subscription
+          </Link>
           <button className="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-50 transition-colors">
             <Bell size={20} />
           </button>
@@ -193,3 +194,5 @@ export default function CompanyAdminDashboard() {
     </div>
   );
 }
+
+

@@ -3,19 +3,63 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LogOut } from "lucide-react";
+import { useState } from "react";
 
 export function Sidebar() {
   const pathname = usePathname();
+  const [showSignOutModal, setShowSignOutModal] = useState(false);
 
   const isCompanyAdmin = pathname.startsWith("/company-admin");
-  const isSuperAdmin = pathname.startsWith("/admin") && !isCompanyAdmin;
+  const isManager = pathname.startsWith("/manager");
+  const isCustomer = pathname.startsWith("/customer");
+  const isSuperAdmin = pathname.startsWith("/admin") && !isCompanyAdmin && !isManager && !isCustomer;
 
   const isMenuSelected = (path: string) => {
-    if (path === "/admin" || path === "/company-admin") {
+    if (path === "/admin" || path === "/company-admin" || path === "/manager" || path === "/customer") {
       return pathname === path;
     }
     return pathname === path || pathname.startsWith(path + "/");
   };
+
+  const managerMenuGroups = [
+    {
+      title: "WORKSPACE",
+      items: [
+        { name: "Overview", path: "/manager" },
+        { name: "Employees", path: "/manager/employees" },
+        { name: "Attendance", path: "/manager/attendance" },
+      ]
+    },
+    {
+      title: "OPERATIONS",
+      items: [
+        { name: "Patrol Monitoring", path: "/manager/patrols" },
+        { name: "Tasks & Checklists", path: "/manager/tasks" },
+        { name: "Reports", path: "/manager/reports" },
+      ]
+    },
+    {
+      title: "COMMUNICATION",
+      items: [
+        { name: "Messages", path: "/manager/messages" },
+        { name: "Announcements", path: "/manager/announcements" },
+        { name: "Alerts & Notifications", path: "/manager/alerts" },
+      ]
+    },
+    {
+      title: "RECORDS",
+      items: [
+        { name: "Documents & Certificates", path: "/manager/documents" },
+      ]
+    },
+    {
+      title: "ACCOUNT",
+      items: [
+        { name: "Manager Profile", path: "/manager/profile" },
+        { name: "Security Settings", path: "/manager/security" },
+      ]
+    }
+  ];
 
   const superAdminMenuGroups = [
     {
@@ -62,7 +106,6 @@ export function Sidebar() {
       title: "CUSTOMERS",
       items: [
         { name: "Customers", path: "/company-admin/customers" },
-        { name: "Portal Users", path: "/company-admin/portal-users" },
         { name: "Locations", path: "/company-admin/locations" },
       ]
     },
@@ -95,28 +138,58 @@ export function Sidebar() {
         { name: "Chat", path: "/company-admin/chat" },
         { name: "Announcements", path: "/company-admin/announcements" },
         { name: "Notifications", path: "/company-admin/notifications" },
-        { name: "Support", path: "/company-admin/support" },
       ]
     },
     {
       title: "AI KNOWLEDGE",
       items: [
-        { name: "Knowledge Sources", path: "/company-admin/knowledge" },
-        { name: "Unresolved Questions", path: "/company-admin/unresolved" },
+        { name: "Knowledge Sources", path: "/company-admin/knowledge-sources" },
+        { name: "Unresolved Questions", path: "/company-admin/unresolved-questions" },
       ]
     },
     {
       title: "SETTINGS",
       items: [
-        { name: "Company Profile", path: "/company-admin/profile" },
+        { name: "Company Profile", path: "/company-admin/company-profile" },
         { name: "Branding & Language", path: "/company-admin/branding" },
-        { name: "Customer Portal", path: "/company-admin/portal-settings" },
-        { name: "Audit Log", path: "/company-admin/audit" },
+        { name: "Customer Portal", path: "/company-admin/customer-portal" },
+        { name: "Audit Log", path: "/company-admin/audit-log" },
       ]
     }
   ];
 
-  const menuGroups = isCompanyAdmin ? companyAdminMenuGroups : superAdminMenuGroups;
+  const customerMenuGroups = [
+    {
+      title: "WORKSPACE",
+      items: [
+        { name: "Dashboard", path: "/customer" },
+        { name: "Locations", path: "/customer/locations" },
+      ]
+    },
+    {
+      title: "OPERATIONS",
+      items: [
+        { name: "Patrols & Checkpoints", path: "/customer/patrols" },
+        { name: "Reports", path: "/customer/reports" },
+      ]
+    },
+    {
+      title: "COMMUNICATION",
+      items: [
+        { name: "Announcements", path: "/customer/announcements" },
+        { name: "AI Assistant", path: "/customer/ai-assistant" },
+        { name: "Notifications", path: "/customer/notifications" },
+      ]
+    }
+  ];
+
+  const menuGroups = isCompanyAdmin 
+    ? companyAdminMenuGroups 
+    : isManager 
+      ? managerMenuGroups 
+      : isCustomer
+        ? customerMenuGroups
+        : superAdminMenuGroups;
 
   return (
     <aside className="w-[260px] bg-[#1a2642] h-full flex flex-col border-r border-[#1a2642] shrink-0">
@@ -141,6 +214,20 @@ export function Sidebar() {
             <div className="bg-[#2a3a5a] rounded-lg p-3 cursor-pointer hover:bg-[#314365] transition-colors">
               <p className="text-[#f97316] text-[10px] font-bold tracking-[0.1em] uppercase mb-1">COMPANY ADMIN</p>
               <p className="text-white text-[13px] font-semibold">ABC Security Ltd.</p>
+            </div>
+          </div>
+        ) : isManager ? (
+          <div className="px-4 mb-6">
+            <div className="bg-[#2a3a5a] rounded-lg p-3 cursor-pointer hover:bg-[#314365] transition-colors">
+              <p className="text-[#f97316] text-[10px] font-bold tracking-[0.1em] uppercase mb-1">MANAGER WORKSPACE</p>
+              <p className="text-white text-[13px] font-semibold">ABC Security Ltd.</p>
+            </div>
+          </div>
+        ) : isCustomer ? (
+          <div className="px-4 mb-6">
+            <div className="bg-[#2a3a5a] rounded-lg p-3 cursor-pointer hover:bg-[#314365] transition-colors">
+              <p className="text-[#f97316] text-[10px] font-bold tracking-[0.1em] uppercase mb-1">CUSTOMER PORTAL</p>
+              <p className="text-white text-[13px] font-semibold">ARC Security Ltd.</p>
             </div>
           </div>
         ) : (
@@ -184,18 +271,52 @@ export function Sidebar() {
       <div className="p-4 border-t border-[#233355] shrink-0">
         <div className="flex items-center gap-3 px-2 mb-4">
           <div className="w-10 h-10 shrink-0 rounded-full bg-[#f97316] flex items-center justify-center text-white font-bold text-sm">
-            {isCompanyAdmin ? "CA" : "SA"}
+            {isCompanyAdmin ? "CA" : isManager ? "DB" : isCustomer ? "SA" : "SA"}
           </div>
           <div className="overflow-hidden">
-            <p className="text-white text-[13px] font-semibold truncate">{isCompanyAdmin ? "Company Admin" : "Super Admin"}</p>
-            <p className="text-[#5e6b83] text-[12px] truncate">{isCompanyAdmin ? "admin@abcsecurity.io" : "admin@shiftpoint.io"}</p>
+            <p className="text-white text-[13px] font-semibold truncate">
+              {isCompanyAdmin ? "Company Admin" : isManager ? "David Brown" : isCustomer ? "Sarah Ahmed" : "Super Admin"}
+            </p>
+            <p className="text-[#5e6b83] text-[12px] truncate">
+              {isCompanyAdmin ? "admin@abcsecurity.io" : isManager ? "Operations Manager" : isCustomer ? "sarah@arc-security.nl" : "admin@shiftpoint.io"}
+            </p>
           </div>
         </div>
-        <button className="flex items-center gap-3 px-3 py-2 w-full text-left text-[#5e6b83] hover:text-white transition-colors text-[13px] font-medium rounded-lg hover:bg-[#233355]">
+        <button onClick={() => setShowSignOutModal(true)} className="flex items-center gap-3 px-3 py-2 w-full text-left text-[#5e6b83] hover:text-white transition-colors text-[13px] font-medium rounded-lg hover:bg-[#233355]">
           <LogOut size={16} />
-          Sign Out
+          Sign out
         </button>
       </div>
+
+      {/* Global Sign Out Modal */}
+      {showSignOutModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-[#1a2642]/60 overflow-y-auto">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-[450px] animate-in fade-in zoom-in-95 duration-200 my-8">
+            <div className="flex justify-between items-start p-6 pb-2 border-b-0">
+              <p className="text-[#f97316] text-[10px] font-bold tracking-[0.1em] uppercase mb-1">SECURE SESSION</p>
+              <button onClick={() => setShowSignOutModal(false)} className="text-gray-400 hover:text-gray-600">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+              </button>
+            </div>
+            
+            <div className="px-6 pb-6 pt-0 space-y-4">
+              <h3 className="text-[#1a2642] text-[24px] font-bold leading-tight">Sign out of ShiftPoint?</h3>
+              <p className="text-gray-500 text-[14px] leading-relaxed">
+                Your current {isCustomer ? "customer" : isManager ? "manager" : isCompanyAdmin ? "admin" : "super-admin"} session will end securely on this device
+              </p>
+            </div>
+
+            <div className="p-6 pt-4 flex justify-end gap-3">
+              <button onClick={() => setShowSignOutModal(false)} className="px-6 py-2.5 border border-gray-200 bg-white rounded-lg text-[14px] font-medium text-gray-600 hover:bg-gray-50 shadow-sm">
+                Cancel
+              </button>
+              <button onClick={() => window.location.href = '/login'} className="px-6 py-2.5 bg-[#f97316] hover:bg-[#e06511] text-white rounded-lg text-[14px] font-medium transition-colors shadow-sm">
+                Sign out
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </aside>
   );
 }

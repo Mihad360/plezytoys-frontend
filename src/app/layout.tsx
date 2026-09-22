@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ReduxProvider } from "@/redux/ReduxProvider";
 import { Toaster } from "sonner";
+import { RoleSwitcher } from "@/components/role-switcher";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -34,6 +35,7 @@ export default function RootLayout({
         <ReduxProvider>
           <Toaster position="top-right" richColors />
           {children}
+          <RoleSwitcher />
         </ReduxProvider>
       </body>
     </html>
