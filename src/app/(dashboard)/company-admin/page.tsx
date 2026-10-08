@@ -54,6 +54,16 @@ export default function CompanyAdminDashboard() {
       {/* Main Content */}
       <main className="flex-1 overflow-auto p-8">
         <div className="max-w-[1400px] mx-auto">
+            {/* Payment Warning Banner */}
+            <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-r-lg mb-8 flex items-center justify-between">
+              <div>
+                <h3 className="text-red-800 text-[14px] font-bold">Payment Overdue</h3>
+                <p className="text-red-600 text-[13px]">Your latest subscription payment has failed. Please update your payment method to avoid service interruption.</p>
+              </div>
+              <button className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-[13px] font-medium transition-colors">
+                Pay Now
+              </button>
+            </div>
           
           <div className="mb-8">
             <h2 className="text-[#1a2642] text-[24px] font-bold mb-1">Company Operations Overview</h2>
@@ -194,5 +204,6 @@ export default function CompanyAdminDashboard() {
     </div>
   );
 }
+
 
 

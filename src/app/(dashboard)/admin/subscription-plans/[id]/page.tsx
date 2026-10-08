@@ -1,17 +1,23 @@
 "use client";
 
 import Link from "next/link";
-import { Bell } from "lucide-react";
+import { Bell, Trash2, RefreshCw } from "lucide-react";
 import UseForm from "@/components/ui/UseForm";
 import UseInput from "@/components/ui/UseInput";
 import UseSelect from "@/components/ui/UseSelect";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import {
+  useGetSubscriptionPlanByIdQuery,
+  useUpdateSubscriptionPlanMutation,
+  useDeleteSubscriptionPlanMutation,
+} from "@/redux/api/superAdminApi";
+import { toast } from "sonner";
 
-const addPlanSchema = z.object({
-  planName: z.string(),
+const editPlanSchema = z.object({
+  planName: z.string().min(1, "Plan name is required"),
   description: z.string().optional(),
   sector: z.string().optional(),
   planStatus: z.string().optional(),
@@ -31,17 +37,34 @@ const addPlanSchema = z.object({
   downgradeRule: z.string().optional(),
 });
 
-type FormValues = z.infer<typeof addPlanSchema>;
+type FormValues = z.infer<typeof editPlanSchema>;
 
 const MODULES = [
   "Employee Management", "Customer Management", "Location Management", "Patrol Management",
-  "Reports & Analytics", "Advanced Analytics", "NFC Checkpoints", "AI Assistant"
+  "Reports & Analytics", "Advanced Analytics", "NFC Checkpoints", "AI Assistant", "Custom Logo Upload"
 ];
 
-export default function AddSubscriptionPlanPage() {
+export default function EditSubscriptionPlanPage() {
   const router = useRouter();
-  const [selectedModules, setSelectedModules] = useState<string[]>(["Employee Management", "Customer Management", "Location Management"]);
+  const params = useParams();
+  const id = typeof params?.id === "string" ? params.id : Array.isArray(params?.id) ? params.id[0] : "";
+
+  const { data: response, isLoading: isFetching, refetch } = useGetSubscriptionPlanByIdQuery(id, { skip: !id });
+  const [updatePlan, { isLoading: isUpdating }] = useUpdateSubscriptionPlanMutation();
+  const [deletePlan, { isLoading: isDeleting }] = useDeleteSubscriptionPlanMutation();
+
+  const plan = response?.data;
+
+  const [selectedModules, setSelectedModules] = useState<string[]>([
+    "Employee Management", "Customer Management", "Location Management"
+  ]);
   const [autoUpgrade, setAutoUpgrade] = useState(true);
+
+  useEffect(() => {
+    if (plan?.features && Array.isArray(plan.features)) {
+      setSelectedModules(plan.features);
+    }
+  }, [plan]);
 
   const toggleModule = (mod: string) => {
     setSelectedModules(prev => 
@@ -49,10 +72,61 @@ export default function AddSubscriptionPlanPage() {
     );
   };
 
-  const onSubmit = (data: FormValues) => {
-    console.log("Add plan:", { ...data, selectedModules, autoUpgrade });
-    router.push("/admin/subscription-plans");
+  const onSubmit = async (data: FormValues) => {
+    try {
+      const price = parseFloat(data.monthlyPrice || data.annualPrice || "0") || 0;
+      const res: any = await updatePlan({
+        id,
+        data: {
+          name: data.planName,
+          price,
+          monthlyPrice: price,
+          annualPrice: parseFloat(data.annualPrice || "0") || price * 10,
+          billingPeriod: data.annualPrice && !data.monthlyPrice ? "yearly" : "monthly",
+          features: selectedModules,
+          maxEmployees: data.employeesLimit ? parseInt(data.employeesLimit, 10) : undefined,
+          maxLocations: data.locationsLimit ? parseInt(data.locationsLimit, 10) : undefined,
+          description: data.description,
+          isActive: data.planStatus ? data.planStatus.toLowerCase() === "active" : true,
+        },
+      }).unwrap();
+
+      toast.success(res?.message || "Subscription plan updated successfully!");
+      router.push("/admin/subscription-plans");
+    } catch (err: any) {
+      toast.error(err?.data?.message || err?.message || "Failed to update subscription plan");
+    }
   };
+
+  const handleDelete = async () => {
+    if (!window.confirm("Are you sure you want to delete this subscription plan? This action cannot be undone.")) {
+      return;
+    }
+    try {
+      const res: any = await deletePlan(id).unwrap();
+      toast.success(res?.message || "Subscription plan deleted successfully");
+      router.push("/admin/subscription-plans");
+    } catch (err: any) {
+      toast.error(err?.data?.message || err?.message || "Failed to delete plan");
+    }
+  };
+
+  const defaultValues = plan
+    ? {
+        planName: plan.name || "",
+        description: plan.description || "",
+        sector: plan.sector || "All sectors",
+        planStatus: plan.isActive ? "Active" : "Draft",
+        pricingBasis: "Employees",
+        currency: "EUR",
+        monthlyPrice: String(plan.price || plan.monthlyPrice || ""),
+        annualPrice: String(plan.annualPrice || (plan.price ? plan.price * 10 : "")),
+        employeesLimit: plan.maxEmployees ? String(plan.maxEmployees) : "",
+        locationsLimit: plan.maxLocations ? String(plan.maxLocations) : "",
+        objectsLimit: "",
+        nfcLimit: "",
+      }
+    : undefined;
 
   return (
     <div className="flex flex-col h-full bg-[#f8f9fa]">
@@ -62,9 +136,26 @@ export default function AddSubscriptionPlanPage() {
           <h1 className="text-[#1a2642] text-xl font-bold">Edit Subscription Plan</h1>
           <p className="text-gray-400 text-xs mt-0.5">SHIFTPOINT • Super Admin</p>
         </div>
-        <button className="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-50 transition-colors">
-          <Bell size={20} />
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => refetch()}
+            title="Refresh"
+            className="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-50 transition-colors"
+          >
+            <RefreshCw size={18} className={isFetching ? "animate-spin" : ""} />
+          </button>
+          <button
+            onClick={handleDelete}
+            disabled={isDeleting}
+            title="Delete Plan"
+            className="w-10 h-10 rounded-full border border-red-200 flex items-center justify-center text-red-500 hover:bg-red-50 transition-colors"
+          >
+            <Trash2 size={18} />
+          </button>
+          <button className="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-50 transition-colors">
+            <Bell size={20} />
+          </button>
+        </div>
       </header>
 
       {/* Main Content */}
@@ -80,8 +171,19 @@ export default function AddSubscriptionPlanPage() {
             <p className="text-gray-500 text-[14px]">Configure access, pricing, limits and availability for this plan.</p>
           </div>
 
-          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-8">
-            <UseForm onSubmit={onSubmit} resolver={zodResolver(addPlanSchema)}>
+          {isFetching ? (
+            <div className="bg-white rounded-xl border border-gray-100 p-12 text-center shadow-sm">
+              <RefreshCw className="animate-spin text-[#f97316] mx-auto mb-3" size={28} />
+              <p className="text-gray-500 font-medium">Loading subscription plan...</p>
+            </div>
+          ) : (
+            <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-8">
+              <UseForm
+                key={plan?._id || "plan-form"}
+                defaultValues={defaultValues}
+                onSubmit={onSubmit}
+                resolver={zodResolver(editPlanSchema)}
+              >
               
               {/* BASIC INFORMATION */}
               <div className="mb-8">
@@ -300,24 +402,37 @@ export default function AddSubscriptionPlanPage() {
               </div>
 
               {/* ACTION BUTTONS */}
-              <div className="flex justify-end items-center gap-3 border-t border-gray-100 pt-6">
+              <div className="flex justify-between items-center border-t border-gray-100 pt-6">
                 <button
                   type="button"
-                  onClick={() => router.push("/admin/subscription-plans")}
-                  className="bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-medium text-[14px] px-6 py-2.5 rounded-lg transition-colors"
+                  onClick={handleDelete}
+                  disabled={isDeleting}
+                  className="bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 font-medium text-[14px] px-5 py-2.5 rounded-lg transition-colors flex items-center gap-2"
                 >
-                  Cancel
+                  <Trash2 size={16} />
+                  {isDeleting ? "Deleting..." : "Delete Plan"}
                 </button>
-                <button
-                  type="submit"
-                  className="bg-[#f97316] hover:bg-[#e06511] text-white font-medium text-[14px] px-6 py-2.5 rounded-lg transition-colors"
-                >
-                  Update Subscription
-                </button>
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => router.push("/admin/subscription-plans")}
+                    className="bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-medium text-[14px] px-6 py-2.5 rounded-lg transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isUpdating}
+                    className="bg-[#f97316] hover:bg-[#e06511] disabled:opacity-50 text-white font-medium text-[14px] px-6 py-2.5 rounded-lg transition-colors"
+                  >
+                    {isUpdating ? "Updating Plan..." : "Update Subscription"}
+                  </button>
+                </div>
               </div>
 
             </UseForm>
           </div>
+          )}
         </div>
       </main>
     </div>

@@ -155,20 +155,19 @@ export default function NfcCheckpointsPage() {
                   <input type="text" placeholder="Enter the unique physical Tag ID" className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-[14px] focus:outline-none focus:border-[#f97316]" />
                   <p className="text-gray-400 text-[11px] mt-2 mb-3">Manual Tag ID entry is supported and validated against every active checkpoint.</p>
                   <button className="px-4 py-1.5 border border-gray-200 rounded-lg text-[12px] font-medium text-[#1a2642] hover:bg-gray-50">
-                    Register by mobile-app scan
+                    Register by mobile-app scan (Optional) (Optional)
                   </button>
                 </div>
 
-                <div className="grid grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-[#1a2642] text-[13px] font-medium mb-2">Latitude</label>
-                    <input type="text" className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-[14px] focus:outline-none focus:border-[#f97316]" />
+                    <label className="block text-[#1a2642] text-[13px] font-medium mb-2">Location</label>
+                    <select className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-[14px] focus:outline-none focus:border-[#f97316] appearance-none bg-white">
+                      <option>Select a location</option>
+                      <option>Westfield Office</option>
+                      <option>North Campus</option>
+                      <option>Central Site</option>
+                    </select>
                   </div>
-                  <div>
-                    <label className="block text-[#1a2642] text-[13px] font-medium mb-2">Longitude</label>
-                    <input type="text" className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-[14px] focus:outline-none focus:border-[#f97316]" />
-                  </div>
-                </div>
 
                 <div>
                   <label className="block text-[#1a2642] text-[13px] font-medium mb-2">Validation radius (m)</label>
@@ -314,3 +313,4 @@ export default function NfcCheckpointsPage() {
     </div>
   );
 }
+

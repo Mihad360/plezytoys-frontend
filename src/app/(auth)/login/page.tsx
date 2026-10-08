@@ -5,7 +5,11 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import UseForm from "@/components/ui/UseForm";
 import UseInput from "@/components/ui/UseInput";
-import { useRouter } from "next/navigation";
+import { Suspense, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useLoginUserMutation } from "@/redux/api/authApi";
+import { handleLoginSuccess } from "@/lib/auth/auth.handlers";
+import { toast } from "sonner";
 
 const loginSchema = z.object({
   email: z.string().email({ message: "Invalid email address" }),
@@ -14,15 +18,82 @@ const loginSchema = z.object({
 
 type LoginFormValues = z.infer<typeof loginSchema>;
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectParam = searchParams.get("redirect");
+  const [loginUser, { isLoading }] = useLoginUserMutation();
 
-  const onSubmit = (data: LoginFormValues) => {
-    console.log("Login data:", data);
-    // Add login logic here
-    router.push("/");
+  const onSubmit = async (data: LoginFormValues) => {
+    try {
+      const res: any = await loginUser(data).unwrap();
+      const payload = res?.data || res;
+
+      if (payload?.isVerified === false) {
+        toast.warning(payload?.message || "Please verify your account.");
+        router.push(`/verify-otp?email=${encodeURIComponent(data.email)}`);
+        return;
+      }
+
+      if (payload?.accessToken) {
+        const targetPath = handleLoginSuccess({
+          accessToken: payload.accessToken,
+          refreshToken: payload.refreshToken,
+          user: payload.user,
+          role: payload.role || payload.user?.role,
+        });
+
+        toast.success("Signed in successfully!");
+        router.push(redirectParam || targetPath);
+      } else {
+        toast.error("Invalid credentials. Please try again.");
+      }
+    } catch (err: any) {
+      const message =
+        err?.data?.message ||
+        err?.data?.data?.message ||
+        err?.message ||
+        "Failed to sign in. Please check your credentials.";
+      toast.error(message);
+    }
   };
 
+  return (
+    <UseForm onSubmit={onSubmit} resolver={zodResolver(loginSchema)}>
+      <div className="space-y-1">
+        <div className="mb-5">
+          <UseInput
+            name="email"
+            label="Email"
+            type="email"
+            placeholder="name@shiftpoint.io"
+            size="large"
+          />
+        </div>
+
+        <div className="mb-6">
+          <UseInput
+            name="password"
+            label="Password"
+            type="password"
+            placeholder="Enter your password"
+            size="large"
+          />
+        </div>
+
+        <button
+          type="submit"
+          disabled={isLoading}
+          className="w-full bg-[#f97316] hover:bg-[#e06511] disabled:opacity-60 text-white font-medium text-[15px] py-[10px] px-4 rounded-md transition-colors mt-2 h-[42px] flex items-center justify-center cursor-pointer"
+        >
+          {isLoading ? "Signing In..." : "Sign In"}
+        </button>
+      </div>
+    </UseForm>
+  );
+}
+
+export default function LoginPage() {
   return (
     <div className="flex min-h-screen bg-[#f8f9fa] font-sans">
       {/* Left Panel */}
@@ -33,7 +104,6 @@ export default function LoginPage() {
         <div className="relative z-10">
           {/* Logo */}
           <div className="flex items-center gap-2 mb-40">
-            {/* Custom SVG logo matching the screenshot */}
             <svg width="36" height="36" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M11 25.5C9.5 25.5 8.5 24 9.5 22.5L14 16.5C14.8 15.5 16 15 17.2 15H24" stroke="#f97316" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"/>
               <path d="M29 14.5C30.5 14.5 31.5 16 30.5 17.5L26 23.5C25.2 24.5 24 25 22.8 25H16" stroke="#f97316" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"/>
@@ -70,37 +140,9 @@ export default function LoginPage() {
             Manage your service management platform securely.
           </p>
 
-          <UseForm onSubmit={onSubmit} resolver={zodResolver(loginSchema)}>
-            <div className="space-y-1">
-              {/* Notice in the design there's some gap, we'll use mb-4 in UseInput via form item spacing, but we can space the wrappers */}
-              <div className="mb-5">
-                <UseInput
-                  name="email"
-                  label="Email"
-                  type="email"
-                  placeholder="name@shiftpoint.io"
-                  size="large"
-                />
-              </div>
-
-              <div className="mb-6">
-                <UseInput
-                  name="password"
-                  label="Password"
-                  type="password"
-                  placeholder="Enter your password"
-                  size="large"
-                />
-              </div>
-
-              <button
-                type="submit"
-                className="w-full bg-[#f97316] hover:bg-[#e06511] text-white font-medium text-[15px] py-[10px] px-4 rounded-md transition-colors mt-2 h-[42px]"
-              >
-                Sign In
-              </button>
-            </div>
-          </UseForm>
+          <Suspense fallback={<div className="text-center py-6 text-gray-400">Loading form...</div>}>
+            <LoginForm />
+          </Suspense>
 
           <div className="mt-8 text-center">
             <Link href="/forgot-password" className="text-[#1a2642] font-semibold text-[14px] hover:underline">

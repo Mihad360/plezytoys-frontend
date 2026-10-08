@@ -9,13 +9,15 @@ import UseSelect from "@/components/ui/UseSelect";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
+import { useCreateCompanyMutation } from "@/redux/api/companyApi";
+import { toast } from "sonner";
 
 const createCompanySchema = z.object({
   companyName: z.string().min(1, { message: "Required" }),
-  businessEmail: z.string().email(),
+  businessEmail: z.string().email({ message: "Valid email is required" }),
   phoneNumber: z.string().min(1, { message: "Required" }),
   adminFullName: z.string().min(1, { message: "Required" }),
-  adminEmail: z.string().email(),
+  adminEmail: z.string().email().optional().or(z.literal("")),
   pilotDuration: z.string().optional(),
 });
 
@@ -28,10 +30,30 @@ export default function CreateCompanyPage() {
   const [selectedSector, setSelectedSector] = useState("Security");
   const [selectedPlan, setSelectedPlan] = useState("Starter");
   const [selectedStatus, setSelectedStatus] = useState("Trial");
+  const [createCompany, { isLoading }] = useCreateCompanyMutation();
 
-  const onSubmit = (data: FormValues) => {
-    console.log("Create company:", { ...data, sector: selectedSector, plan: selectedPlan, status: selectedStatus });
-    router.push("/admin/companies");
+  const onSubmit = async (data: FormValues) => {
+    try {
+      const emailToUse = (data.adminEmail || data.businessEmail).toLowerCase().trim();
+      const payload = {
+        companyName: data.companyName,
+        businessEmail: data.businessEmail.toLowerCase().trim(),
+        contactEmail: data.businessEmail.toLowerCase().trim(),
+        phoneNumber: data.phoneNumber,
+        sector: selectedSector,
+        adminFullName: data.adminFullName,
+        adminEmail: emailToUse,
+        plan: selectedPlan,
+        status: selectedStatus,
+        pilotDuration: data.pilotDuration || "1 month",
+      };
+
+      const res: any = await createCompany(payload).unwrap();
+      toast.success(res?.message || "Company created successfully!");
+      router.push("/admin/companies");
+    } catch (err: any) {
+      toast.error(err?.data?.message || err?.message || "Failed to create company");
+    }
   };
 
   return (
@@ -210,9 +232,10 @@ export default function CreateCompanyPage() {
               <div className="flex items-center gap-3">
                 <button
                   type="submit"
-                  className="bg-[#f97316] hover:bg-[#e06511] text-white font-medium text-[14px] px-6 py-2.5 rounded-lg transition-colors"
+                  disabled={isLoading}
+                  className="bg-[#f97316] hover:bg-[#e06511] disabled:opacity-50 text-white font-medium text-[14px] px-6 py-2.5 rounded-lg transition-colors"
                 >
-                  Create Company
+                  {isLoading ? "Creating Company..." : "Create Company"}
                 </button>
                 <button
                   type="button"

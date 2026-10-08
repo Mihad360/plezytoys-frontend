@@ -1,7 +1,8 @@
 "use client";
 import { createContext, useContext, useEffect, useState } from "react";
 import { Socket } from "socket.io-client";
-import { getSocket, resetSocket } from "@/lib/socket";
+import { getSocket, connectSocketWithToken, resetSocket } from "@/lib/socket";
+import { getClientToken } from "@/lib/auth/cookies.client";
 
 interface SocketContextType {
   socket: Socket | null;
@@ -13,33 +14,63 @@ const SocketContext = createContext<SocketContextType>({
   isConnected: false,
 });
 
-// Grab the singleton once at module level — stable across all renders
-const socket = getSocket();
-
 export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
   const [isConnected, setIsConnected] = useState(false);
+  const [socket, setSocket] = useState<Socket | null>(null);
 
   useEffect(() => {
-    const handleConnect = () => setIsConnected(true);
-    const handleDisconnect = () => setIsConnected(false);
-    const handleConnectError = (err: Error) => {
-      console.error("[Socket] Connection error:", err.message);
-      setIsConnected(false);
+    let activeSocket: Socket | null = null;
+
+    const initSocket = () => {
+      const token = getClientToken();
+      if (!token) {
+        // User not logged in — do not attempt socket connection
+        if (activeSocket) {
+          activeSocket.disconnect();
+        }
+        setIsConnected(false);
+        setSocket(null);
+        return;
+      }
+
+      activeSocket = connectSocketWithToken(token);
+      setSocket(activeSocket);
+
+      const handleConnect = () => setIsConnected(true);
+      const handleDisconnect = () => setIsConnected(false);
+      const handleConnectError = (err: Error) => {
+        // Don't clutter console if token was invalidated
+        if (err.message !== "Token missing") {
+          console.error("[Socket] Connection error:", err.message);
+        }
+        setIsConnected(false);
+      };
+
+      activeSocket.on("connect", handleConnect);
+      activeSocket.on("disconnect", handleDisconnect);
+      activeSocket.on("connect_error", handleConnectError);
+
+      if (!activeSocket.connected) {
+        activeSocket.connect();
+      }
     };
 
-    socket.on("connect", handleConnect);
-    socket.on("disconnect", handleDisconnect);
-    socket.on("connect_error", handleConnectError);
+    initSocket();
 
-    if (!socket.connected) {
-      socket.connect();
-    }
+    // Listen for login/logout events across the app
+    const handleAuthChange = () => {
+      initSocket();
+    };
+
+    window.addEventListener("auth:state-change", handleAuthChange);
 
     return () => {
-      socket.off("connect", handleConnect);
-      socket.off("disconnect", handleDisconnect);
-      socket.off("connect_error", handleConnectError);
-      resetSocket();
+      window.removeEventListener("auth:state-change", handleAuthChange);
+      if (activeSocket) {
+        activeSocket.off("connect");
+        activeSocket.off("disconnect");
+        activeSocket.off("connect_error");
+      }
     };
   }, []);
 

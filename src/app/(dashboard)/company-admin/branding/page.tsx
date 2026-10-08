@@ -37,6 +37,19 @@ export default function BrandingLanguagePage() {
             </h2>
             
             <div className="space-y-6 max-w-[500px]">
+
+              <div>
+                <label className="block text-[#1a2642] text-[13px] font-medium mb-2">Company Logo (White-label)</label>
+                <div className="flex items-center gap-4">
+                  <div className="w-16 h-16 rounded-lg border border-gray-200 bg-gray-50 flex items-center justify-center overflow-hidden shrink-0">
+                    <span className="text-gray-400 text-[10px]">No Logo</span>
+                  </div>
+                  <div className="flex-1">
+                    <input type="file" accept="image/*" className="block w-full text-[13px] text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-[13px] file:font-semibold file:bg-orange-50 file:text-[#f97316] hover:file:bg-orange-100 cursor-pointer" />
+                    <p className="text-gray-400 text-[11px] mt-2">Will be displayed in employee mobile app and dashboard. Requires a White-label subscription plan.</p>
+                  </div>
+                </div>
+              </div>
               
               <div>
                 <label className="block text-[#1a2642] text-[13px] font-medium mb-2">Primary brand color</label>

@@ -36,7 +36,7 @@ export default function PatrolRouteDetailsPage() {
           
           <div className="mb-6">
             <Link href="/company-admin/patrol-routes" className="text-[#8492a6] hover:text-[#1a2642] text-[13px] flex items-center gap-2 mb-4">
-              ← Back to Patrol Routes
+              ← Back to Checkpoint Routes
             </Link>
             <div className="flex justify-between items-start">
               <div>
@@ -80,7 +80,7 @@ export default function PatrolRouteDetailsPage() {
                   <div className="col-span-2 text-[#1a2642] text-[13px] font-medium">Main Office</div>
                   
                   <div className="col-span-1 text-[#8492a6] text-[13px]">Route type</div>
-                  <div className="col-span-2 text-[#1a2642] text-[13px] font-medium">Reusable Patrol Route</div>
+                  <div className="col-span-2 text-[#1a2642] text-[13px] font-medium">Reusable Checkpoint Route</div>
 
                   <div className="col-span-1 text-[#8492a6] text-[13px]">Status</div>
                   <div className="col-span-2 text-[#1a2642] text-[13px] font-medium">Active</div>
@@ -227,7 +227,7 @@ export default function PatrolRouteDetailsPage() {
         <div className="absolute inset-0 z-50 flex items-center justify-center p-4 bg-[#1a2642]/60">
           <div className="bg-white rounded-xl shadow-xl w-full max-w-[500px] animate-in fade-in zoom-in-95 duration-200 p-8">
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-[#1a2642] text-[20px] font-bold">Deactivate patrol route?</h3>
+              <h3 className="text-[#1a2642] text-[20px] font-bold">Deactivate Checkpoint Route?</h3>
               <button onClick={() => setActiveModal("none")} className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
             </div>
 
