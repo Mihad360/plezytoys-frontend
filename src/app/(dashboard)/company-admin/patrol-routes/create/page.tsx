@@ -11,8 +11,8 @@ export default function CreatePatrolRoutePage() {
       {/* Top Header */}
       <header className="h-[72px] bg-white border-b border-gray-100 flex items-center justify-between px-8 shrink-0">
         <div>
-          <p className="text-gray-400 text-[11px] font-medium tracking-wide uppercase mb-0.5">SHIFTPOINT • Operations • Create Patrol Route</p>
-          <h1 className="text-[#1a2642] text-[18px] font-bold leading-tight">Create Patrol Route</h1>
+          <p className="text-gray-400 text-[11px] font-medium tracking-wide uppercase mb-0.5">SHIFTPOINT • Operations • Create Checkpoint Route</p>
+          <h1 className="text-[#1a2642] text-[18px] font-bold leading-tight">Create Checkpoint Route</h1>
         </div>
         <div className="flex items-center gap-4">
           <button className="flex items-center gap-2 px-4 py-1.5 bg-orange-50 border border-orange-100 rounded-lg text-[#f97316] text-[13px] font-medium hover:bg-orange-100 transition-colors">
@@ -82,7 +82,7 @@ export default function CreatePatrolRoutePage() {
               <div className="space-y-6">
                 <div>
                   <h2 className="text-[#1a2642] text-[20px] font-bold mb-1">Route Details</h2>
-                  <p className="text-gray-500 text-[14px]">Create a reusable patrol route template.</p>
+                  <p className="text-gray-500 text-[14px]">Create a reusable Checkpoint Route template.</p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-6">
@@ -375,7 +375,7 @@ export default function CreatePatrolRoutePage() {
             {step === 5 && (
               <div className="space-y-6">
                 <div>
-                  <h2 className="text-[#1a2642] text-[20px] font-bold mb-1">Review Patrol Route</h2>
+                  <h2 className="text-[#1a2642] text-[20px] font-bold mb-1">Review Checkpoint Route</h2>
                   <p className="text-gray-500 text-[14px]">Review your route configuration before activating it.</p>
                 </div>
 

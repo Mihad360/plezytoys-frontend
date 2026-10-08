@@ -43,13 +43,25 @@ const authApi = baseApi.injectEndpoints({
     }),
 
     resetPassword: build.mutation({
+      query: (arg: any) => {
+        const token = arg?.token;
+        const body = arg?.newPassword ? { newPassword: arg.newPassword } : arg;
+        return {
+          url: "/auth/reset-password",
+          method: "POST",
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+          data: body,
+        };
+      },
+      invalidatesTags: ["auth"],
+    }),
+
+    refreshToken: build.mutation({
       query: (data) => ({
-        url: "/auth/reset-password",
+        url: "/auth/refresh-token",
         method: "POST",
-        contentType: "application/json",
         data,
       }),
-      invalidatesTags: ["auth"],
     }),
 
     changePassword: build.mutation({
@@ -89,5 +101,6 @@ export const {
   useResetPasswordMutation,
   useChangePasswordMutation,
   useResendOtpMutation,
+  useRefreshTokenMutation,
   useGetMyProfileQuery,
 } = authApi;

@@ -9,9 +9,11 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useCreateSubscriptionPlanMutation } from "@/redux/api/superAdminApi";
+import { toast } from "sonner";
 
 const addPlanSchema = z.object({
-  planName: z.string(),
+  planName: z.string().min(1, "Plan name is required"),
   description: z.string().optional(),
   sector: z.string().optional(),
   planStatus: z.string().optional(),
@@ -35,13 +37,14 @@ type FormValues = z.infer<typeof addPlanSchema>;
 
 const MODULES = [
   "Employee Management", "Customer Management", "Location Management", "Patrol Management",
-  "Reports & Analytics", "Advanced Analytics", "NFC Checkpoints", "AI Assistant"
+  "Reports & Analytics", "Advanced Analytics", "NFC Checkpoints", "AI Assistant", "Custom Logo Upload"
 ];
 
 export default function AddSubscriptionPlanPage() {
   const router = useRouter();
   const [selectedModules, setSelectedModules] = useState<string[]>(["Employee Management", "Customer Management", "Location Management"]);
   const [autoUpgrade, setAutoUpgrade] = useState(true);
+  const [createPlan, { isLoading }] = useCreateSubscriptionPlanMutation();
 
   const toggleModule = (mod: string) => {
     setSelectedModules(prev => 
@@ -49,9 +52,27 @@ export default function AddSubscriptionPlanPage() {
     );
   };
 
-  const onSubmit = (data: FormValues) => {
-    console.log("Add plan:", { ...data, selectedModules, autoUpgrade });
-    router.push("/admin/subscription-plans");
+  const onSubmit = async (data: FormValues) => {
+    try {
+      const price = parseFloat(data.monthlyPrice || data.annualPrice || "0") || 0;
+      const res: any = await createPlan({
+        name: data.planName,
+        price,
+        monthlyPrice: price,
+        annualPrice: parseFloat(data.annualPrice || "0") || price * 10,
+        billingPeriod: data.annualPrice && !data.monthlyPrice ? "yearly" : "monthly",
+        features: selectedModules,
+        maxEmployees: data.employeesLimit ? parseInt(data.employeesLimit, 10) : undefined,
+        maxLocations: data.locationsLimit ? parseInt(data.locationsLimit, 10) : undefined,
+        description: data.description,
+        isActive: data.planStatus ? data.planStatus.toLowerCase() === "active" : true,
+      }).unwrap();
+
+      toast.success(res?.message || "Subscription plan created successfully!");
+      router.push("/admin/subscription-plans");
+    } catch (err: any) {
+      toast.error(err?.data?.message || err?.message || "Failed to create subscription plan");
+    }
   };
 
   return (
@@ -310,9 +331,10 @@ export default function AddSubscriptionPlanPage() {
                 </button>
                 <button
                   type="submit"
-                  className="bg-[#f97316] hover:bg-[#e06511] text-white font-medium text-[14px] px-6 py-2.5 rounded-lg transition-colors"
+                  disabled={isLoading}
+                  className="bg-[#f97316] hover:bg-[#e06511] disabled:opacity-50 text-white font-medium text-[14px] px-6 py-2.5 rounded-lg transition-colors"
                 >
-                  Add Subscription
+                  {isLoading ? "Adding Plan..." : "Add Subscription"}
                 </button>
               </div>
 

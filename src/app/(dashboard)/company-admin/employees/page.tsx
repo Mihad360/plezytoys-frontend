@@ -1,7 +1,8 @@
 "use client";
 
-import { Bell, Search, ChevronDown, X, Download } from "lucide-react";
+import { Bell, Search, ChevronDown, X, Download, ShieldCheck, Hash } from "lucide-react";
 import { useState } from "react";
+import { useGetNextEmployeeIdQuery } from "@/redux/api/employeeApi";
 
 const EMPLOYEES = [
   {
@@ -85,6 +86,9 @@ export default function EmployeesPage() {
   const [activeModal, setActiveModal] = useState<"none" | "invite" | "details" | "roles">("none");
   const [activeTab, setActiveTab] = useState<"Overview" | "Documents" | "Operational History">("Overview");
   
+  const { data: nextIdData, isLoading: isNextIdLoading } = useGetNextEmployeeIdQuery();
+  const autoEmployeeId = nextIdData?.data?.nextEmployeeId || "EMP-0002";
+
   // Form states for Invite Modal
   const [selectedRoles, setSelectedRoles] = useState<string[]>(["Site Coordinator", "Customer Liaison"]);
   const [selectedManagers, setSelectedManagers] = useState<string[]>(["David Brown"]);
@@ -288,6 +292,29 @@ export default function EmployeesPage() {
               </div>
               
               <div className="p-8 space-y-6">
+                <div>
+                  <label className="block text-[#1a2642] text-[13px] font-semibold mb-2 flex items-center justify-between">
+                    <span className="flex items-center gap-1.5">
+                      <Hash size={14} className="text-[#f97316]" /> Employee ID (Auto-generated)
+                    </span>
+                    <span className="text-[11px] font-normal text-gray-400">Read only · Next in sequence</span>
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      readOnly
+                      value={isNextIdLoading ? "Loading next ID..." : autoEmployeeId}
+                      className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-[14px] font-mono font-semibold text-[#1a2642] focus:outline-none cursor-not-allowed select-all"
+                    />
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-100">
+                      <ShieldCheck size={13} /> Verified
+                    </div>
+                  </div>
+                  <p className="text-gray-400 text-[11px] mt-1.5">
+                    This unique identifier is automatically reserved from the database for the new employee record.
+                  </p>
+                </div>
+
                 <div className="grid grid-cols-2 gap-6">
                   <div>
                     <label className="block text-[#1a2642] text-[13px] font-medium mb-2">First name</label>

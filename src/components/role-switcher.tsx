@@ -16,7 +16,7 @@ export function RoleSwitcher() {
     { name: "Super Admin", href: "/admin", icon: Settings, color: "bg-blue-600" },
     { name: "Company Admin", href: "/company-admin", icon: Building2, color: "bg-orange-600" },
     { name: "Manager", href: "/manager", icon: Users, color: "bg-purple-600" },
-    { name: "Customer", href: "/customer", icon: UserCircle2, color: "bg-green-600" },
+    { name: "Employee", href: "/employee", icon: UserCircle2, color: "bg-green-600" },
   ];
 
   return (
@@ -57,3 +57,4 @@ export function RoleSwitcher() {
     </div>
   );
 }
+

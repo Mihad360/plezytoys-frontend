@@ -3,13 +3,97 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Check } from "lucide-react";
+import {
+  useForgetPasswordMutation,
+  useVerifyOtpMutation,
+  useResendOtpMutation,
+  useResetPasswordMutation,
+} from "@/redux/api/authApi";
+import { toast } from "sonner";
 
 export default function ForgotPasswordFlow() {
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
+  const [email, setEmail] = useState("");
+  const [otp, setOtp] = useState("");
+  const [resetToken, setResetToken] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+
+  const [forgetPassword, { isLoading: isSendingCode }] = useForgetPasswordMutation();
+  const [verifyOtp, { isLoading: isVerifying }] = useVerifyOtpMutation();
+  const [resendOtp, { isLoading: isResending }] = useResendOtpMutation();
+  const [resetPasswordMut, { isLoading: isResetting }] = useResetPasswordMutation();
+
+  const handleSendCode = async () => {
+    if (!email || !email.includes("@")) {
+      toast.error("Please enter a valid email address.");
+      return;
+    }
+
+    try {
+      const res: any = await forgetPassword({ email }).unwrap();
+      toast.success(res?.message || "Verification code sent to your email!");
+      setStep(2);
+    } catch (err: any) {
+      toast.error(err?.data?.message || err?.message || "Failed to send reset code.");
+    }
+  };
+
+  const handleVerifyOtp = async () => {
+    if (!otp || otp.trim().length < 4) {
+      toast.error("Please enter the verification code received.");
+      return;
+    }
+
+    try {
+      const res: any = await verifyOtp({ email, otp: otp.trim() }).unwrap();
+      const payload = res?.data || res;
+      const token = payload?.resetToken || payload?.accessToken;
+      if (token) {
+        setResetToken(token);
+        toast.success("Code verified successfully!");
+        setStep(3);
+      } else {
+        toast.error("Verification failed. Please try again.");
+      }
+    } catch (err: any) {
+      toast.error(err?.data?.message || err?.message || "Invalid or expired verification code.");
+    }
+  };
+
+  const handleResendCode = async () => {
+    try {
+      const res: any = await resendOtp(email).unwrap();
+      toast.success(res?.message || "A new code has been sent to your email!");
+    } catch (err: any) {
+      toast.error(err?.data?.message || err?.message || "Failed to resend code.");
+    }
+  };
+
+  const handleResetPassword = async () => {
+    if (!newPassword || newPassword.length < 6) {
+      toast.error("Password must be at least 6 characters.");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      toast.error("Passwords do not match.");
+      return;
+    }
+
+    try {
+      await resetPasswordMut({
+        newPassword,
+        token: resetToken,
+      }).unwrap();
+      toast.success("Password reset successfully!");
+      setStep(4);
+    } catch (err: any) {
+      toast.error(err?.data?.message || err?.message || "Failed to reset password.");
+    }
+  };
 
   return (
     <div className="flex min-h-screen">
-      
       {/* Left Panel */}
       <div className="w-[50%] bg-[#1a2642] flex flex-col justify-between p-12">
         <div>
@@ -34,11 +118,10 @@ export default function ForgotPasswordFlow() {
       {/* Right Panel */}
       <div className="w-[50%] bg-[#f8f9fa] flex items-center justify-center p-12">
         <div className="w-full max-w-[480px] bg-white rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 p-10">
-          
           {step < 4 && (
             <button 
               onClick={() => step > 1 ? setStep((step - 1) as 1 | 2 | 3) : window.location.href = '/login'} 
-              className="text-[#f97316] text-[14px] hover:underline mb-8 inline-block"
+              className="text-[#f97316] text-[14px] hover:underline mb-8 inline-block cursor-pointer"
             >
               ← {step === 1 ? 'Back to sign in' : 'Back'}
             </button>
@@ -58,7 +141,7 @@ export default function ForgotPasswordFlow() {
               <p className="text-[#f97316] text-[11px] font-bold tracking-[0.1em] uppercase mb-3">PASSWORD RECOVERY</p>
               <h2 className="text-[#1a2642] text-[28px] font-medium mb-3">Reset your password</h2>
               <p className="text-gray-500 text-[14px] leading-relaxed mb-8">
-                Enter the email address associated with your account. We'll send a six-digit verification code.
+                Enter the email address associated with your account. We'll send a verification code.
               </p>
 
               <div className="space-y-6">
@@ -66,15 +149,18 @@ export default function ForgotPasswordFlow() {
                   <label className="block text-[#1a2642] text-[13px] font-medium mb-2">Email address</label>
                   <input 
                     type="email" 
-                    defaultValue="mahmudul14286@gmail.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="name@company.com"
                     className="w-full px-4 py-3 border border-gray-200 rounded-lg text-[14px] focus:outline-none focus:border-[#f97316]"
                   />
                 </div>
                 <button 
-                  onClick={() => setStep(2)}
-                  className="w-full py-3.5 bg-[#f97316] hover:bg-[#e06511] text-white rounded-lg text-[15px] font-medium transition-colors shadow-sm mt-2"
+                  onClick={handleSendCode}
+                  disabled={isSendingCode}
+                  className="w-full py-3.5 bg-[#f97316] hover:bg-[#e06511] disabled:opacity-60 text-white rounded-lg text-[15px] font-medium transition-colors shadow-sm mt-2 cursor-pointer"
                 >
-                  Send verification code
+                  {isSendingCode ? "Sending code..." : "Send verification code"}
                 </button>
               </div>
             </div>
@@ -85,7 +171,7 @@ export default function ForgotPasswordFlow() {
               <p className="text-[#f97316] text-[11px] font-bold tracking-[0.1em] uppercase mb-3">PASSWORD RECOVERY</p>
               <h2 className="text-[#1a2642] text-[28px] font-medium mb-3">Verify your email</h2>
               <p className="text-gray-500 text-[14px] leading-relaxed mb-8">
-                We sent a six-digit code to<br/>mahmudul14286@gmail.com.
+                We sent a verification code to<br/><strong className="text-[#1a2642]">{email}</strong>.
               </p>
 
               <div className="space-y-6">
@@ -93,16 +179,25 @@ export default function ForgotPasswordFlow() {
                   <label className="block text-[#1a2642] text-[13px] font-medium mb-2">Verification code</label>
                   <input 
                     type="text" 
-                    placeholder="0 0 0 0 0 0"
-                    className="w-full px-4 py-3 border border-gray-200 rounded-lg text-[16px] tracking-[0.5em] text-center focus:outline-none focus:border-[#f97316]"
+                    value={otp}
+                    onChange={(e) => setOtp(e.target.value)}
+                    placeholder="Enter code"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-lg text-[16px] tracking-[0.3em] text-center focus:outline-none focus:border-[#f97316]"
                   />
                 </div>
-                <button className="text-[#f97316] text-[14px] hover:underline">Resend code</button>
                 <button 
-                  onClick={() => setStep(3)}
-                  className="w-full py-3.5 bg-[#f97316] hover:bg-[#e06511] text-white rounded-lg text-[15px] font-medium transition-colors shadow-sm"
+                  onClick={handleResendCode}
+                  disabled={isResending}
+                  className="text-[#f97316] text-[14px] hover:underline transition-all cursor-pointer block"
                 >
-                  Verify code
+                  {isResending ? "Resending..." : "Resend code"}
+                </button>
+                <button 
+                  onClick={handleVerifyOtp}
+                  disabled={isVerifying}
+                  className="w-full py-3.5 bg-[#f97316] hover:bg-[#e06511] disabled:opacity-60 text-white rounded-lg text-[15px] font-medium transition-colors shadow-sm cursor-pointer"
+                >
+                  {isVerifying ? "Verifying..." : "Verify code"}
                 </button>
               </div>
             </div>
@@ -113,7 +208,7 @@ export default function ForgotPasswordFlow() {
               <p className="text-[#f97316] text-[11px] font-bold tracking-[0.1em] uppercase mb-3">PASSWORD RECOVERY</p>
               <h2 className="text-[#1a2642] text-[28px] font-medium mb-3">Create a new password</h2>
               <p className="text-gray-500 text-[14px] leading-relaxed mb-8">
-                Choose a strong password with at least 8 characters.
+                Choose a strong password with at least 6 characters.
               </p>
 
               <div className="space-y-6">
@@ -121,6 +216,9 @@ export default function ForgotPasswordFlow() {
                   <label className="block text-[#1a2642] text-[13px] font-medium mb-2">New password</label>
                   <input 
                     type="password" 
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder="Enter new password"
                     className="w-full px-4 py-3 border border-gray-200 rounded-lg text-[14px] focus:outline-none focus:border-[#f97316]"
                   />
                 </div>
@@ -128,14 +226,18 @@ export default function ForgotPasswordFlow() {
                   <label className="block text-[#1a2642] text-[13px] font-medium mb-2">Confirm new password</label>
                   <input 
                     type="password" 
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="Re-enter new password"
                     className="w-full px-4 py-3 border border-gray-200 rounded-lg text-[14px] focus:outline-none focus:border-[#f97316]"
                   />
                 </div>
                 <button 
-                  onClick={() => setStep(4)}
-                  className="w-full py-3.5 bg-[#f97316] hover:bg-[#e06511] text-white rounded-lg text-[15px] font-medium transition-colors shadow-sm mt-2"
+                  onClick={handleResetPassword}
+                  disabled={isResetting}
+                  className="w-full py-3.5 bg-[#f97316] hover:bg-[#e06511] disabled:opacity-60 text-white rounded-lg text-[15px] font-medium transition-colors shadow-sm mt-2 cursor-pointer"
                 >
-                  Save new password
+                  {isResetting ? "Saving..." : "Save new password"}
                 </button>
               </div>
             </div>
@@ -149,7 +251,7 @@ export default function ForgotPasswordFlow() {
               <p className="text-[#f97316] text-[11px] font-bold tracking-[0.1em] uppercase mb-3">PASSWORD RECOVERY</p>
               <h2 className="text-[#1a2642] text-[28px] font-medium mb-3">Password updated</h2>
               <p className="text-gray-500 text-[14px] leading-relaxed mb-8">
-                Your password has been reset successfully. You can now sign in with your new password.
+                Your password has been reset successfully. You can now sign in with your new credentials.
               </p>
 
               <Link 
@@ -160,7 +262,6 @@ export default function ForgotPasswordFlow() {
               </Link>
             </div>
           )}
-
         </div>
       </div>
     </div>

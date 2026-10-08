@@ -3,19 +3,36 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LogOut } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { handleLogout } from "@/lib/auth/auth.handlers";
+import { getClientUser } from "@/lib/auth/cookies.client";
+import { UserRole } from "@/types";
 
 export function Sidebar() {
   const pathname = usePathname();
   const [showSignOutModal, setShowSignOutModal] = useState(false);
+  const [currentUser, setCurrentUser] = useState<{
+    id?: string;
+    fullName?: string;
+    email?: string;
+    role?: UserRole;
+    avatar?: string;
+  } | null>(null);
+
+  useEffect(() => {
+    const user = getClientUser();
+    if (user) {
+      setCurrentUser(user);
+    }
+  }, []);
 
   const isCompanyAdmin = pathname.startsWith("/company-admin");
   const isManager = pathname.startsWith("/manager");
-  const isCustomer = pathname.startsWith("/customer");
-  const isSuperAdmin = pathname.startsWith("/admin") && !isCompanyAdmin && !isManager && !isCustomer;
+  const isEmployee = pathname.startsWith("/employee");
+  const isSuperAdmin = pathname.startsWith("/admin") && !isCompanyAdmin && !isManager && !isEmployee;
 
   const isMenuSelected = (path: string) => {
-    if (path === "/admin" || path === "/company-admin" || path === "/manager" || path === "/customer") {
+    if (path === "/admin" || path === "/company-admin" || path === "/manager" || path === "/employee") {
       return pathname === path;
     }
     return pathname === path || pathname.startsWith(path + "/");
@@ -120,7 +137,7 @@ export function Sidebar() {
       title: "OPERATIONS",
       items: [
         { name: "NFC Checkpoints", path: "/company-admin/nfc-checkpoints" },
-        { name: "Patrol Routes", path: "/company-admin/patrol-routes" },
+        { name: "Checkpoint Routes", path: "/company-admin/patrol-routes" },
         { name: "Tasks & Checklists", path: "/company-admin/tasks" },
         { name: "Reports", path: "/company-admin/reports" },
       ]
@@ -158,27 +175,29 @@ export function Sidebar() {
     }
   ];
 
-  const customerMenuGroups = [
+  const employeeMenuGroups = [
     {
       title: "WORKSPACE",
       items: [
-        { name: "Dashboard", path: "/customer" },
-        { name: "Locations", path: "/customer/locations" },
+        { name: "Dashboard", path: "/employee" },
+        { name: "Locations", path: "/employee/locations" },
       ]
     },
     {
       title: "OPERATIONS",
       items: [
-        { name: "Patrols & Checkpoints", path: "/customer/patrols" },
-        { name: "Reports", path: "/customer/reports" },
+        { name: "Schedule & Shifts", path: "/employee/schedule" },
+        { name: "Patrols & Checkpoints", path: "/employee/patrols" },
+        { name: "Reports", path: "/employee/reports" },
       ]
     },
     {
       title: "COMMUNICATION",
       items: [
-        { name: "Announcements", path: "/customer/announcements" },
-        { name: "AI Assistant", path: "/customer/ai-assistant" },
-        { name: "Notifications", path: "/customer/notifications" },
+        { name: "Messages", path: "/employee/messages" },
+        { name: "Announcements", path: "/employee/announcements" },
+        { name: "AI Assistant", path: "/employee/ai-assistant" },
+        { name: "Notifications", path: "/employee/notifications" },
       ]
     }
   ];
@@ -187,8 +206,8 @@ export function Sidebar() {
     ? companyAdminMenuGroups 
     : isManager 
       ? managerMenuGroups 
-      : isCustomer
-        ? customerMenuGroups
+      : isEmployee
+        ? employeeMenuGroups
         : superAdminMenuGroups;
 
   return (
@@ -223,10 +242,10 @@ export function Sidebar() {
               <p className="text-white text-[13px] font-semibold">ABC Security Ltd.</p>
             </div>
           </div>
-        ) : isCustomer ? (
+        ) : isEmployee ? (
           <div className="px-4 mb-6">
             <div className="bg-[#2a3a5a] rounded-lg p-3 cursor-pointer hover:bg-[#314365] transition-colors">
-              <p className="text-[#f97316] text-[10px] font-bold tracking-[0.1em] uppercase mb-1">CUSTOMER PORTAL</p>
+              <p className="text-[#f97316] text-[10px] font-bold tracking-[0.1em] uppercase mb-1">EMPLOYEE WORKSPACE</p>
               <p className="text-white text-[13px] font-semibold">ARC Security Ltd.</p>
             </div>
           </div>
@@ -270,15 +289,17 @@ export function Sidebar() {
       {/* User Area */}
       <div className="p-4 border-t border-[#233355] shrink-0">
         <div className="flex items-center gap-3 px-2 mb-4">
-          <div className="w-10 h-10 shrink-0 rounded-full bg-[#f97316] flex items-center justify-center text-white font-bold text-sm">
-            {isCompanyAdmin ? "CA" : isManager ? "DB" : isCustomer ? "SA" : "SA"}
+          <div className="w-10 h-10 shrink-0 rounded-full bg-[#f97316] flex items-center justify-center text-white font-bold text-sm uppercase">
+            {currentUser?.fullName 
+              ? currentUser.fullName.split(" ").map(n => n[0]).join("").slice(0, 2)
+              : isCompanyAdmin ? "CA" : isManager ? "MG" : isEmployee ? "EM" : "SA"}
           </div>
           <div className="overflow-hidden">
             <p className="text-white text-[13px] font-semibold truncate">
-              {isCompanyAdmin ? "Company Admin" : isManager ? "David Brown" : isCustomer ? "Sarah Ahmed" : "Super Admin"}
+              {currentUser?.fullName || (isCompanyAdmin ? "Company Admin" : isManager ? "Manager" : isEmployee ? "Employee" : "Super Admin")}
             </p>
             <p className="text-[#5e6b83] text-[12px] truncate">
-              {isCompanyAdmin ? "admin@abcsecurity.io" : isManager ? "Operations Manager" : isCustomer ? "sarah@arc-security.nl" : "admin@shiftpoint.io"}
+              {currentUser?.email || (isCompanyAdmin ? "admin@company.com" : isManager ? "manager@company.com" : isEmployee ? "employee@company.com" : "admin@shiftpoint.io")}
             </p>
           </div>
         </div>
@@ -302,7 +323,7 @@ export function Sidebar() {
             <div className="px-6 pb-6 pt-0 space-y-4">
               <h3 className="text-[#1a2642] text-[24px] font-bold leading-tight">Sign out of ShiftPoint?</h3>
               <p className="text-gray-500 text-[14px] leading-relaxed">
-                Your current {isCustomer ? "customer" : isManager ? "manager" : isCompanyAdmin ? "admin" : "super-admin"} session will end securely on this device
+                Your current session will end securely on this device and you will need to sign in again to access the portal.
               </p>
             </div>
 
@@ -310,7 +331,14 @@ export function Sidebar() {
               <button onClick={() => setShowSignOutModal(false)} className="px-6 py-2.5 border border-gray-200 bg-white rounded-lg text-[14px] font-medium text-gray-600 hover:bg-gray-50 shadow-sm">
                 Cancel
               </button>
-              <button onClick={() => window.location.href = '/login'} className="px-6 py-2.5 bg-[#f97316] hover:bg-[#e06511] text-white rounded-lg text-[14px] font-medium transition-colors shadow-sm">
+              <button 
+                onClick={() => {
+                  handleLogout();
+                  setShowSignOutModal(false);
+                  window.location.href = '/login';
+                }} 
+                className="px-6 py-2.5 bg-[#f97316] hover:bg-[#e06511] text-white rounded-lg text-[14px] font-medium transition-colors shadow-sm"
+              >
                 Sign out
               </button>
             </div>

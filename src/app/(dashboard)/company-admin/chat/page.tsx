@@ -37,7 +37,10 @@ export default function ChatPage() {
         {/* Sidebar */}
         <div className="w-[380px] bg-white border-r border-gray-100 flex flex-col h-full shrink-0">
           <div className="p-6 pb-4">
-            <h2 className="text-[#1a2642] text-[20px] font-bold mb-4">Messages</h2>
+            <div className="flex justify-between items-center mb-4">
+                <h2 className="text-[#1a2642] text-[20px] font-bold">Messages</h2>
+                <button className="text-[#f97316] text-[13px] font-semibold hover:underline flex items-center gap-1">+ Create Group</button>
+              </div>
             <div className="relative mb-6">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
               <input 
@@ -299,3 +302,4 @@ export default function ChatPage() {
     </div>
   );
 }
+

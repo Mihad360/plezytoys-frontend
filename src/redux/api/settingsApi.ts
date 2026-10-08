@@ -16,8 +16,23 @@ export const settingsApi = baseApi.injectEndpoints({
 
     // Terms (read-only public)
     getAllTerms: builder.query({
-      query: () => ({ url: "/term/", method: "GET" }),
+      query: () => ({ url: "/settings/terms", method: "GET" }),
       providesTags: ["terms"],
+    }),
+
+    // System Settings (Super Admin)
+    getSystemSettings: builder.query({
+      query: () => ({ url: "/system-settings", method: "GET" }),
+      providesTags: ["systemSettings"],
+    }),
+
+    updateSystemSettings: builder.mutation({
+      query: (data) => ({
+        url: "/system-settings",
+        method: "PATCH",
+        data,
+      }),
+      invalidatesTags: ["systemSettings"],
     }),
   }),
 });
@@ -31,4 +46,8 @@ export const {
 
   // Terms
   useGetAllTermsQuery,
+
+  // System Settings
+  useGetSystemSettingsQuery,
+  useUpdateSystemSettingsMutation,
 } = settingsApi;

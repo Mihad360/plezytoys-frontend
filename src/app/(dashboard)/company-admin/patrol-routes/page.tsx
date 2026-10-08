@@ -28,7 +28,7 @@ const HISTORY = [
 
 type TabType = "all" | "active" | "draft" | "scheduled" | "history";
 
-export default function PatrolRoutesPage() {
+export default function CheckpointRoutesPage() {
   const [activeTab, setActiveTab] = useState<TabType>("all");
 
   return (
@@ -36,8 +36,8 @@ export default function PatrolRoutesPage() {
       {/* Top Header */}
       <header className="h-[72px] bg-white border-b border-gray-100 flex items-center justify-between px-8 shrink-0">
         <div>
-          <p className="text-gray-400 text-[11px] font-medium tracking-wide uppercase mb-0.5">SHIFTPOINT • Operations • Patrol Routes</p>
-          <h1 className="text-[#1a2642] text-[18px] font-bold leading-tight">Patrol Routes</h1>
+          <p className="text-gray-400 text-[11px] font-medium tracking-wide uppercase mb-0.5">SHIFTPOINT • Operations • Checkpoint Routes</p>
+          <h1 className="text-[#1a2642] text-[18px] font-bold leading-tight">Checkpoint Routes</h1>
         </div>
         <div className="flex items-center gap-4">
           <button className="flex items-center gap-2 px-4 py-1.5 bg-orange-50 border border-orange-100 rounded-lg text-[#f97316] text-[13px] font-medium hover:bg-orange-100 transition-colors">
@@ -61,14 +61,14 @@ export default function PatrolRoutesPage() {
           <div className="flex justify-between items-start mb-8">
             <div>
               <h2 className="text-[#1a2642] text-[24px] font-bold mb-1">
-                {activeTab === 'history' ? 'Patrol History' : activeTab === 'scheduled' ? 'Scheduled Patrols' : 'Patrol Routes'}
+                {activeTab === 'history' ? 'Patrol History' : activeTab === 'scheduled' ? 'Scheduled Patrols' : 'Checkpoint Routes'}
               </h2>
               <p className="text-gray-500 text-[14px]">
                 {activeTab === 'history' 
                   ? 'Historical executions are retained as immutable operational records.' 
                   : activeTab === 'scheduled'
                   ? 'View individual patrol occurrences generated from your route templates.'
-                  : 'Create and manage reusable patrol route templates for your customers and locations.'}
+                  : 'Create and manage reusable Checkpoint Route templates for your customers and locations.'}
               </p>
             </div>
             {activeTab !== 'history' && activeTab !== 'scheduled' && (
@@ -76,7 +76,7 @@ export default function PatrolRoutesPage() {
                 href="/company-admin/patrol-routes/create"
                 className="px-5 py-2.5 bg-[#f97316] hover:bg-[#e06511] text-white rounded-lg text-[14px] font-medium transition-colors"
               >
-                + Create Patrol Route
+                + Create Checkpoint Route
               </Link>
             )}
           </div>
